@@ -11,8 +11,9 @@
 #define __MINGW64_STRINGIFY(x) \
   __STRINGIFY(x)
 
-#define __MINGW64_VERSION_MAJOR 3
-#define __MINGW64_VERSION_MINOR 4
+#define __MINGW64_VERSION_MAJOR 6
+#define __MINGW64_VERSION_MINOR 0
+#define __MINGW64_VERSION_BUGFIX 0
 
 /* This macro holds an monotonic increasing value, which indicates
    a specific fix/patch is present on trunk.  This value isn't related to
@@ -25,9 +26,11 @@
 #define __MINGW64_VERSION_STR	\
   __MINGW64_STRINGIFY(__MINGW64_VERSION_MAJOR) \
   "." \
-  __MINGW64_STRINGIFY(__MINGW64_VERSION_MINOR)
+  __MINGW64_STRINGIFY(__MINGW64_VERSION_MINOR) \
+  "." \
+  __MINGW64_STRINGIFY(__MINGW64_VERSION_BUGFIX)
 
-#define __MINGW64_VERSION_STATE "stable"
+#define __MINGW64_VERSION_STATE "alpha"
 
 /* mingw.org's version macros: these make gcc to define
    MINGW32_SUPPORTS_MT_EH and to use the _CRT_MT global
@@ -36,7 +39,56 @@
 #define __MINGW32_MAJOR_VERSION 3
 #define __MINGW32_MINOR_VERSION 11
 
-#ifdef _WIN64
+/* Set VC specific compiler target macros.  */
+#if defined(__x86_64) && defined(_X86_)
+#  undef _X86_  /* _X86_ is not for __x86_64 */
+#endif
+
+#if defined(_X86_) && !defined(_M_IX86) && !defined(_M_IA64) \
+   && !defined(_M_AMD64) && !defined(__x86_64)
+#  if defined(__i486__)
+#    define _M_IX86 400
+#  elif defined(__i586__)
+#    define _M_IX86 500
+#  elif defined(__i686__)
+#    define _M_IX86 600
+#  else
+#    define _M_IX86 300
+#  endif
+#endif /* if defined(_X86_) && !defined(_M_IX86) && !defined(_M_IA64) ... */
+
+#if defined(__x86_64) && !defined(_M_IX86) && !defined(_M_IA64) \
+   && !defined(_M_AMD64)
+#  define _M_AMD64 100
+#  define _M_X64 100
+#endif
+
+#if defined(__ia64__) && !defined(_M_IX86) && !defined(_M_IA64) \
+   && !defined(_M_AMD64) && !defined(_X86_) && !defined(__x86_64)
+#  define _M_IA64 100
+#endif
+
+#if defined(__arm__) && !defined(_M_ARM) && !defined(_M_ARMT) \
+   && !defined(_M_THUMB)
+#  define _M_ARM 100
+#  define _M_ARMT 100
+#  define _M_THUMB 100
+#  ifndef _ARM_
+#    define _ARM_ 1
+#  endif
+#  ifndef _M_ARM_NT
+#    define _M_ARM_NT 1
+#  endif
+#endif
+
+#if defined(__aarch64__) && !defined(_M_ARM64)
+#  define _M_ARM64 1
+#  ifndef _ARM64_
+#    define _ARM64_ 1
+#  endif
+#endif
+
+#ifndef _X86_
    /* MS does not prefix symbols by underscores for 64-bit.  */
 #  ifndef __MINGW_USE_UNDERSCORE_PREFIX
      /* As we have to support older gcc version, which are using underscores
@@ -57,11 +109,11 @@
 #      define __MINGW_USE_UNDERSCORE_PREFIX 0
 #    endif /* __USER_LABEL_PREFIX__ */
 #  endif
-#else /* ! ifdef _WIN64 */
-   /* For 32-bits we have always to prefix by underscore.  */
+#else /* ! ifndef _X86_ */
+   /* For x86 we have always to prefix by underscore.  */
 #  undef __MINGW_USE_UNDERSCORE_PREFIX
 #  define __MINGW_USE_UNDERSCORE_PREFIX 1
-#endif /* ifdef _WIN64 */
+#endif /* ifndef _X86_ */
 
 #if __MINGW_USE_UNDERSCORE_PREFIX == 0
 #  define __MINGW_IMP_SYMBOL(sym) __imp_##sym
@@ -74,42 +126,6 @@
 #  define __MINGW_USYMBOL(sym) _##sym
 #  define __MINGW_LSYMBOL(sym) sym
 #endif /* if __MINGW_USE_UNDERSCORE_PREFIX == 0 */
-
-/* Set VC specific compiler target macros.  */
-#if defined(__x86_64) && defined(_X86_)
-#  undef _X86_	/* _X86_ is not for __x86_64 */
-#endif
-
-#if defined(_X86_) && !defined(_M_IX86) && !defined(_M_IA64) \
-   && !defined(_M_AMD64) && !defined(__x86_64)
-#  if defined(__i486__)
-#    define _M_IX86 400
-#  elif defined(__i586__)
-#    define _M_IX86 500
-#  else
-     /* This gives wrong (600 instead of 300) value if -march=i386 is specified
-      but we cannot check for__i386__ as it is defined for all 32-bit CPUs. */
-#    define _M_IX86 600
-#  endif
-#endif /* if defined(_X86_) && !defined(_M_IX86) && !defined(_M_IA64) ... */
-
-#if defined(__x86_64) && !defined(_M_IX86) && !defined(_M_IA64) \
-   && !defined(_M_AMD64)
-#  define _M_AMD64 100
-#  define _M_X64 100
-#endif
-
-#if defined(__ia64__) && !defined(_M_IX86) && !defined(_M_IA64) \
-   && !defined(_M_AMD64) && !defined(_X86_) && !defined(__x86_64)
-#  define _M_IA64 100
-#endif
-
-#if defined(__arm__) && !defined(_M_ARM)
-#  define _M_ARM 100
-#  ifndef _ARM_
-#    define _ARM_ 1
-#  endif
-#endif
 
 #ifndef __PTRDIFF_TYPE__
 #  ifdef _WIN64
@@ -261,14 +277,18 @@
   __attribute__((__format__(gnu_scanf, __format,__args)))
 
 #undef __mingw_ovr
+#undef __mingw_static_ovr
 
 #ifdef __cplusplus
 #  define __mingw_ovr  inline __cdecl
+#  define __mingw_static_ovr static __mingw_ovr
 #elif defined (__GNUC__)
 #  define __mingw_ovr static \
       __attribute__ ((__unused__)) __inline__ __cdecl
+#  define __mingw_static_ovr __mingw_ovr
 #else
 #  define __mingw_ovr static __cdecl
+#  define __mingw_static_ovr __mingw_ovr
 #endif /* __cplusplus */
 
 #endif	/* _INC_CRTDEFS_MACRO */

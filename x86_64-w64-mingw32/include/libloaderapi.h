@@ -80,8 +80,6 @@ extern "C" {
   WINBASEAPI HRSRC WINAPI FindResourceExW (HMODULE hModule, LPCWSTR lpType, LPCWSTR lpName, WORD wLanguage);
   WINBASEAPI DECLSPEC_NORETURN VOID WINAPI FreeLibraryAndExitThread (HMODULE hLibModule, DWORD dwExitCode);
   WINBASEAPI WINBOOL WINAPI FreeResource (HGLOBAL hResData);
-  WINBASEAPI DWORD WINAPI GetModuleFileNameA (HMODULE hModule, LPSTR lpFilename, DWORD nSize);
-  WINBASEAPI DWORD WINAPI GetModuleFileNameW (HMODULE hModule, LPWSTR lpFilename, DWORD nSize);
   WINBASEAPI HMODULE WINAPI GetModuleHandleA (LPCSTR lpModuleName);
   WINBASEAPI HMODULE WINAPI GetModuleHandleW (LPCWSTR lpModuleName);
   WINBASEAPI HMODULE WINAPI LoadLibraryExA (LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
@@ -105,7 +103,6 @@ extern "C" {
 #endif
 
 #define LoadString __MINGW_NAME_AW(LoadString)
-#define GetModuleFileName __MINGW_NAME_AW(GetModuleFileName)
 #define GetModuleHandle __MINGW_NAME_AW(GetModuleHandle)
 #define LoadLibraryEx __MINGW_NAME_AW(LoadLibraryEx)
 
@@ -127,12 +124,20 @@ extern "C" {
 #define EnumResourceNamesEx __MINGW_NAME_AW(EnumResourceNamesEx)
 #define EnumResourceTypesEx __MINGW_NAME_AW(EnumResourceTypesEx)
 #endif
+#elif defined(WINSTORECOMPAT)
+WINBASEAPI HMODULE WINAPI GetModuleHandleA (LPCSTR lpModuleName);
+WINBASEAPI HMODULE WINAPI GetModuleHandleW (LPCWSTR lpModuleName);
+#define GetModuleHandle __MINGW_NAME_AW(GetModuleHandle)
 #endif
 
 #if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_APP)
   WINBASEAPI WINBOOL WINAPI DisableThreadLibraryCalls (HMODULE hLibModule);
   WINBASEAPI WINBOOL WINAPI FreeLibrary (HMODULE hLibModule);
   WINBASEAPI FARPROC WINAPI GetProcAddress (HMODULE hModule, LPCSTR lpProcName);
+  WINBASEAPI DWORD WINAPI GetModuleFileNameA (HMODULE hModule, LPSTR lpFilename, DWORD nSize);
+  WINBASEAPI DWORD WINAPI GetModuleFileNameW (HMODULE hModule, LPWSTR lpFilename, DWORD nSize);
+  #define GetModuleFileName __MINGW_NAME_AW(GetModuleFileName)
+
 #if WINVER >= 0x0601
   WINBASEAPI int WINAPI FindStringOrdinal (DWORD dwFindStringOrdinalFlags, LPCWSTR lpStringSource, int cchSource, LPCWSTR lpStringValue, int cchValue, WINBOOL bIgnoreCase);
 #endif

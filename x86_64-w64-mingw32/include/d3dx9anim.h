@@ -329,37 +329,37 @@ DECLARE_INTERFACE_(ID3DXAnimationController, IUnknown)
     STDMETHOD_(UINT, GetNumAnimationSets)(THIS) PURE;
     STDMETHOD(GetAnimationSet)(THIS_ UINT index, ID3DXAnimationSet **anim_set) PURE;
     STDMETHOD(GetAnimationSetByName)(THIS_ const char *name, ID3DXAnimationSet **anim_set) PURE;
-    STDMETHOD(AdvanceTime)(THIS_ double time_delta, ID3DXAnimationCallbackHandler **callback_handler) PURE;
+    STDMETHOD(AdvanceTime)(THIS_ double time_delta, ID3DXAnimationCallbackHandler *callback_handler) PURE;
     STDMETHOD(ResetTime)(THIS) PURE;
-    STDMETHOD_(DOUBLE, GetTime)(THIS) PURE;
+    STDMETHOD_(double, GetTime)(THIS) PURE;
     STDMETHOD(SetTrackAnimationSet)(THIS_ UINT track, ID3DXAnimationSet *anim_set) PURE;
     STDMETHOD(GetTrackAnimationSet)(THIS_ UINT track, ID3DXAnimationSet **anim_set) PURE;
-    STDMETHOD(GetTrackPriority)(THIS_ UINT track, D3DXPRIORITY_TYPE *priority) PURE;
-    STDMETHOD(SetTrackSpeed)(THIS_ UINT track, FLOAT speed) PURE;
-    STDMETHOD(SetTrackWeight)(THIS_ UINT track, FLOAT weight) PURE;
-    STDMETHOD(SetTrackPosition)(THIS_ UINT track, DOUBLE position) PURE;
+    STDMETHOD(SetTrackPriority)(THIS_ UINT track, D3DXPRIORITY_TYPE priority) PURE;
+    STDMETHOD(SetTrackSpeed)(THIS_ UINT track, float speed) PURE;
+    STDMETHOD(SetTrackWeight)(THIS_ UINT track, float weight) PURE;
+    STDMETHOD(SetTrackPosition)(THIS_ UINT track, double position) PURE;
     STDMETHOD(SetTrackEnable)(THIS_ UINT track, WINBOOL enable) PURE;
-    STDMETHOD(SetTrackDesc)(THIS_ UINT track, LPD3DXTRACK_DESC desc) PURE;
-    STDMETHOD(GetTrackDesc)(THIS_ UINT track, LPD3DXTRACK_DESC desc) PURE;
-    STDMETHOD(SetPriorityBlend)(THIS_ FLOAT blend_weight) PURE;
-    STDMETHOD_(FLOAT, GetPriorityBlend)(THIS) PURE;
-    STDMETHOD_(D3DXEVENTHANDLE, KeyTrackSpeed)(THIS_ UINT track, FLOAT new_speed,
-            DOUBLE start_time, DOUBLE duration, D3DXTRANSITION_TYPE transition) PURE;
-    STDMETHOD_(D3DXEVENTHANDLE, KeyTrackWeight)(THIS_ UINT track, FLOAT new_weight,
-            DOUBLE start_time, DOUBLE duration, D3DXTRANSITION_TYPE transition) PURE;
-    STDMETHOD_(D3DXEVENTHANDLE, KeyTrackPosition)(THIS_ UINT track, DOUBLE new_position, DOUBLE start_time) PURE;
-    STDMETHOD_(D3DXEVENTHANDLE, KeyTrackEnable)(THIS_ UINT track, WINBOOL new_enable, DOUBLE start_time) PURE;
-    STDMETHOD_(D3DXEVENTHANDLE, KeyPriorityBlend)(THIS_ FLOAT new_blend_weight,
-            DOUBLE start_time, DOUBLE duration, D3DXTRANSITION_TYPE transition) PURE;
+    STDMETHOD(SetTrackDesc)(THIS_ UINT track, D3DXTRACK_DESC *desc) PURE;
+    STDMETHOD(GetTrackDesc)(THIS_ UINT track, D3DXTRACK_DESC *desc) PURE;
+    STDMETHOD(SetPriorityBlend)(THIS_ float blend_weight) PURE;
+    STDMETHOD_(float, GetPriorityBlend)(THIS) PURE;
+    STDMETHOD_(D3DXEVENTHANDLE, KeyTrackSpeed)(THIS_ UINT track, float new_speed,
+            double start_time, double duration, D3DXTRANSITION_TYPE transition) PURE;
+    STDMETHOD_(D3DXEVENTHANDLE, KeyTrackWeight)(THIS_ UINT track, float new_weight,
+            double start_time, double duration, D3DXTRANSITION_TYPE transition) PURE;
+    STDMETHOD_(D3DXEVENTHANDLE, KeyTrackPosition)(THIS_ UINT track, double new_position, double start_time) PURE;
+    STDMETHOD_(D3DXEVENTHANDLE, KeyTrackEnable)(THIS_ UINT track, WINBOOL new_enable, double start_time) PURE;
+    STDMETHOD_(D3DXEVENTHANDLE, KeyPriorityBlend)(THIS_ float new_blend_weight,
+            double start_time, double duration, D3DXTRANSITION_TYPE transition) PURE;
     STDMETHOD(UnkeyEvent)(THIS_ D3DXEVENTHANDLE event) PURE;
     STDMETHOD(UnkeyAllTrackEvents)(THIS_ UINT track) PURE;
     STDMETHOD(UnkeyAllPriorityBlends)(THIS) PURE;
     STDMETHOD_(D3DXEVENTHANDLE, GetCurrentTrackEvent)(THIS_ UINT track, D3DXEVENT_TYPE event_type) PURE;
     STDMETHOD_(D3DXEVENTHANDLE, GetCurrentPriorityBlend)(THIS) PURE;
     STDMETHOD_(D3DXEVENTHANDLE, GetUpcomingTrackEvent)(THIS_ UINT track, D3DXEVENTHANDLE event) PURE;
-    STDMETHOD_(D3DXEVENTHANDLE, GetUpcomingPriorityBlend)(THIS_ D3DXEVENTHANDLE handle) PURE;
+    STDMETHOD_(D3DXEVENTHANDLE, GetUpcomingPriorityBlend)(THIS_ D3DXEVENTHANDLE event) PURE;
     STDMETHOD(ValidateEvent)(THIS_ D3DXEVENTHANDLE event) PURE;
-    STDMETHOD(GetEventDesc)(THIS_ D3DXEVENTHANDLE event, LPD3DXEVENT_DESC desc) PURE;
+    STDMETHOD(GetEventDesc)(THIS_ D3DXEVENTHANDLE event, D3DXEVENT_DESC *desc) PURE;
     STDMETHOD(CloneAnimationController)(THIS_ UINT max_num_anim_outputs, UINT max_num_anim_sets,
             UINT max_num_tracks, UINT max_num_events, ID3DXAnimationController **anim_controller) PURE;
 };
@@ -388,11 +388,12 @@ HRESULT WINAPI D3DXSaveMeshHierarchyToFileW(const WCHAR *filename, DWORD format,
         ID3DXSaveUserData *user_data_saver);
 #define D3DXSaveMeshHierarchyToFile __MINGW_NAME_AW(D3DXSaveMeshHierarchyToFile)
 HRESULT WINAPI D3DXFrameDestroy(D3DXFRAME *frame_root, ID3DXAllocateHierarchy *alloc);
-HRESULT WINAPI D3DXFrameAppendChild(LPD3DXFRAME, CONST D3DXFRAME*);
+HRESULT WINAPI D3DXFrameAppendChild(D3DXFRAME *parent, const D3DXFRAME *child);
 D3DXFRAME * WINAPI D3DXFrameFind(const D3DXFRAME *root, const char *name);
 HRESULT WINAPI D3DXFrameRegisterNamedMatrices(D3DXFRAME *frame_root, ID3DXAnimationController *animation_controller);
-UINT WINAPI D3DXFrameNumNamedMatrices(CONST D3DXFRAME *frame_root);
-HRESULT WINAPI D3DXFrameCalculateBoundingSphere(CONST D3DXFRAME*, LPD3DXVECTOR3, FLOAT*);
+UINT WINAPI D3DXFrameNumNamedMatrices(const D3DXFRAME *frame_root);
+HRESULT WINAPI D3DXFrameCalculateBoundingSphere(const D3DXFRAME *frame_root, D3DXVECTOR3 *center,
+        FLOAT *radius);
 HRESULT WINAPI D3DXCreateKeyframedAnimationSet(const char *name, double ticks_per_second,
         D3DXPLAYBACK_TYPE playback_type, UINT animation_count, UINT callback_key_count,
         const D3DXKEY_CALLBACK *callback_keys, ID3DXKeyframedAnimationSet **animation_set);

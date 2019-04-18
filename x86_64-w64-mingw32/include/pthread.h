@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2011-2013 mingw-w64 project
+   Copyright (c) 2011-2016 mingw-w64 project
 
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -82,7 +82,7 @@ extern "C" {
 /* MSB 8-bit major version, 8-bit minor version, 16-bit patch level.  */
 #define __WINPTHREADS_VERSION 0x00050000
 
-#if defined DLL_EXPORT && !defined WINPTHREAD_STATIC
+#if defined DLL_EXPORT
 #ifdef IN_WINPTHREAD
 #define WINPTHREAD_API __declspec(dllexport)
 #else
@@ -158,7 +158,7 @@ extern "C" {
 #define PTHREAD_MUTEX_RECURSIVE_NP	PTHREAD_MUTEX_RECURSIVE
 
 void * WINPTHREAD_API pthread_timechange_handler_np(void * dummy);
-/* int    WINPTHREAD_API pthread_delay_np (const struct timespec *interval); */
+int    WINPTHREAD_API pthread_delay_np (const struct timespec *interval);
 int    WINPTHREAD_API pthread_num_processors_np(void);
 int    WINPTHREAD_API pthread_set_num_processors_np(int n);
 
@@ -212,7 +212,7 @@ struct _pthread_cleanup
 
 /* Note that if async cancelling is used, then there is a race here */
 #define pthread_cleanup_pop(E)\
-    (*pthread_getclean() = _pthread_cup.next, (E?_pthread_cup.func((pthread_once_t *)_pthread_cup.arg):0));}
+    (*pthread_getclean() = _pthread_cup.next, ((E) ? (_pthread_cup.func((pthread_once_t *)_pthread_cup.arg)) : (void)0));}
 
 /* Windows doesn't have this, so declare it ourselves. */
 #ifndef _TIMESPEC_DEFINED
@@ -262,7 +262,7 @@ int WINPTHREAD_API pthread_attr_getschedparam(const pthread_attr_t *attr, struct
 int WINPTHREAD_API pthread_getschedparam(pthread_t thread, int *pol, struct sched_param *param);
 int WINPTHREAD_API pthread_setschedparam(pthread_t thread, int pol, const struct sched_param *param);
 int WINPTHREAD_API pthread_attr_setschedpolicy (pthread_attr_t *attr, int pol);
-int WINPTHREAD_API pthread_attr_getschedpolicy (pthread_attr_t *attr, int *pol);
+int WINPTHREAD_API pthread_attr_getschedpolicy (const pthread_attr_t *attr, int *pol);
 
 /* synchronization objects */
 typedef void	*pthread_spinlock_t;
@@ -314,6 +314,9 @@ int       WINPTHREAD_API pthread_create_wrapper(void *args);
 int       WINPTHREAD_API pthread_create(pthread_t *th, const pthread_attr_t *attr, void *(* func)(void *), void *arg);
 int       WINPTHREAD_API pthread_join(pthread_t t, void **res);
 int       WINPTHREAD_API pthread_detach(pthread_t t);
+int       WINPTHREAD_API pthread_setname_np(pthread_t thread, const char *name);
+int       WINPTHREAD_API pthread_getname_np(pthread_t thread, char *name, size_t len);
+
 
 int WINPTHREAD_API pthread_rwlock_init(pthread_rwlock_t *rwlock_, const pthread_rwlockattr_t *attr);
 int WINPTHREAD_API pthread_rwlock_wrlock(pthread_rwlock_t *l);
@@ -359,7 +362,7 @@ int WINPTHREAD_API pthread_attr_setinheritsched(pthread_attr_t *a, int flag);
 int WINPTHREAD_API pthread_attr_getinheritsched(const pthread_attr_t *a, int *flag);
 int WINPTHREAD_API pthread_attr_setscope(pthread_attr_t *a, int flag);
 int WINPTHREAD_API pthread_attr_getscope(const pthread_attr_t *a, int *flag);
-int WINPTHREAD_API pthread_attr_getstackaddr(pthread_attr_t *attr, void **stack);
+int WINPTHREAD_API pthread_attr_getstackaddr(const pthread_attr_t *attr, void **stack);
 int WINPTHREAD_API pthread_attr_setstackaddr(pthread_attr_t *attr, void *stack);
 int WINPTHREAD_API pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *size);
 int WINPTHREAD_API pthread_attr_setstacksize(pthread_attr_t *attr, size_t size);
@@ -407,54 +410,10 @@ unsigned long long         WINPTHREAD_API _pthread_rel_time_in_ms(const struct t
 unsigned long long         WINPTHREAD_API _pthread_time_in_ms(void);
 unsigned long long         WINPTHREAD_API _pthread_time_in_ms_from_timespec(const struct timespec *ts);
 int                        WINPTHREAD_API _pthread_tryjoin (pthread_t t, void **res);
-int                        WINPTHREAD_API pthread_delay_np (const struct timespec *interval);
 int                        WINPTHREAD_API pthread_rwlockattr_destroy(pthread_rwlockattr_t *a);
 int                        WINPTHREAD_API pthread_rwlockattr_getpshared(pthread_rwlockattr_t *a, int *s);
 int                        WINPTHREAD_API pthread_rwlockattr_init(pthread_rwlockattr_t *a);
 int                        WINPTHREAD_API pthread_rwlockattr_setpshared(pthread_rwlockattr_t *a, int s);
-
-/* Recursive API emulation.  */
-#undef localtime_r
-#define localtime_r(_Time, _Tm)	({ struct tm *___tmp_tm;		\
-						pthread_testcancel();	\
-						___tmp_tm = localtime((_Time));\
-						if (___tmp_tm) {	\
-						  *(_Tm) = *___tmp_tm;	\
-						  ___tmp_tm = (_Tm);	\
-						}			\
-						___tmp_tm;	})
-
-#undef gmtime_r
-#define gmtime_r(_Time,_Tm)	({ struct tm *___tmp_tm;		\
-						pthread_testcancel();	\
-						___tmp_tm = gmtime((_Time)); \
-						if (___tmp_tm) {	\
-						  *(_Tm) = *___tmp_tm;	\
-						  ___tmp_tm = (_Tm);	\
-						}			\
-						___tmp_tm;	})
-
-#undef ctime_r
-#define ctime_r(_Time,_Str)	({ char *___tmp_tm;			\
-						pthread_testcancel();	\
-						___tmp_tm = ctime((_Time));  \
-						if (___tmp_tm)		\
-						 ___tmp_tm =		\
-						   strcpy((_Str),___tmp_tm); \
-						___tmp_tm;	})
-
-#undef asctime_r
-#define asctime_r(_Tm, _Buf)	({ char *___tmp_tm;			\
-						pthread_testcancel();	\
-						___tmp_tm = asctime((_Tm)); \
-						if (___tmp_tm)		\
-						 ___tmp_tm =		\
-						   strcpy((_Buf),___tmp_tm);\
-						___tmp_tm;	})
-
-#ifndef rand_r
-#define rand_r(__seed) (__seed == __seed ? rand () : rand ())
-#endif
 
 #ifndef SIG_BLOCK
 #define SIG_BLOCK 0
@@ -717,6 +676,14 @@ int                        WINPTHREAD_API pthread_rwlockattr_setpshared(pthread_
 #define wprintf(...) (pthread_testcancel(), wprintf(__VA_ARGS__))
 #define wscanf(...) (pthread_testcancel(), wscanf(__VA_ARGS__))
 #endif
+
+/* We deal here with a gcc issue for posix threading on Windows.
+   We would need to change here gcc's gthr-posix.h header, but this
+   got rejected.  So we deal it within this header.  */
+#ifdef _GTHREAD_USE_MUTEX_INIT_FUNC
+#undef _GTHREAD_USE_MUTEX_INIT_FUNC
+#endif
+#define _GTHREAD_USE_MUTEX_INIT_FUNC 1
 
 #ifdef __cplusplus
 }

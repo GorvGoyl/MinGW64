@@ -8,7 +8,14 @@
 
 #include <_mingw_unicode.h>
 
+#ifdef __LP64__
+#pragma push_macro("u_long")
+#undef u_long
+#define u_long __ms_u_long
+#endif
+
 #include <winsock2.h>
+#include <ws2ipdef.h>
 #include <psdk_inc/_ip_mreq1.h>
 #include <winapifamily.h>
 
@@ -66,10 +73,8 @@ struct ip_msfilter {
 
 #define SS_PORT(ssp) (((struct sockaddr_in*)(ssp))->sin_port)
 
-#define IN6ADDR_ANY_INIT { 0 }
-#define IN6ADDR_LOOPBACK_INIT { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }
-
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#define IN6ADDR_ANY_INIT { { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } } }
+#define IN6ADDR_LOOPBACK_INIT { { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 } } }
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,9 +83,6 @@ extern "C" {
   extern const struct in6_addr in6addr_any;
   extern const struct in6_addr in6addr_loopback;
 
-#define WS2TCPIP_INLINE __CRT_INLINE
-
-int IN6_ADDR_EQUAL(const struct in6_addr *,const struct in6_addr *);
 int IN6_IS_ADDR_UNSPECIFIED(const struct in6_addr *);
 int IN6_IS_ADDR_LOOPBACK(const struct in6_addr *);
 int IN6_IS_ADDR_MULTICAST(const struct in6_addr *);
@@ -100,7 +102,6 @@ void IN6_SET_ADDR_LOOPBACK(struct in6_addr *);
 void IN6ADDR_SETANY(struct sockaddr_in6 *);
 void IN6ADDR_SETLOOPBACK(struct sockaddr_in6 *);
 
-WS2TCPIP_INLINE int IN6_ADDR_EQUAL(const struct in6_addr *a,const struct in6_addr *b) { return (memcmp(a,b,sizeof(struct in6_addr))==0); }
 WS2TCPIP_INLINE int IN6_IS_ADDR_UNSPECIFIED(const struct in6_addr *a) { return ((a->s6_words[0]==0) && (a->s6_words[1]==0) && (a->s6_words[2]==0) && (a->s6_words[3]==0) && (a->s6_words[4]==0) && (a->s6_words[5]==0) && (a->s6_words[6]==0) && (a->s6_words[7]==0)); }
 WS2TCPIP_INLINE int IN6_IS_ADDR_LOOPBACK(const struct in6_addr *a) { return ((a->s6_words[0]==0) && (a->s6_words[1]==0) && (a->s6_words[2]==0) && (a->s6_words[3]==0) && (a->s6_words[4]==0) && (a->s6_words[5]==0) && (a->s6_words[6]==0) && (a->s6_words[7]==0x0100)); }
 WS2TCPIP_INLINE int IN6_IS_ADDR_MULTICAST(const struct in6_addr *a) { return (a->s6_bytes[0]==0xff); }
@@ -134,6 +135,20 @@ WS2TCPIP_INLINE void IN6ADDR_SETLOOPBACK(struct sockaddr_in6 *a) {
   IN6_SET_ADDR_LOOPBACK(&a->sin6_addr);
   a->sin6_scope_id = 0;
 }
+
+/* Those declarations are mandatory for Open Group Base spec */
+#define IN6_IS_ADDR_UNSPECIFIED IN6_IS_ADDR_UNSPECIFIED
+#define IN6_IS_ADDR_LOOPBACK IN6_IS_ADDR_LOOPBACK
+#define IN6_IS_ADDR_MULTICAST IN6_IS_ADDR_MULTICAST
+#define IN6_IS_ADDR_LINKLOCAL IN6_IS_ADDR_LINKLOCAL
+#define IN6_IS_ADDR_SITELOCAL IN6_IS_ADDR_SITELOCAL
+#define IN6_IS_ADDR_V4MAPPED IN6_IS_ADDR_V4MAPPED
+#define IN6_IS_ADDR_V4COMPAT IN6_IS_ADDR_V4COMPAT
+#define IN6_IS_ADDR_MC_NODELOCAL IN6_IS_ADDR_MC_NODELOCAL
+#define IN6_IS_ADDR_MC_LINKLOCAL IN6_IS_ADDR_MC_LINKLOCAL
+#define IN6_IS_ADDR_MC_SITELOCAL IN6_IS_ADDR_MC_SITELOCAL
+#define IN6_IS_ADDR_MC_ORGLOCAL IN6_IS_ADDR_MC_ORGLOCAL
+#define IN6_IS_ADDR_MC_GLOBAL IN6_IS_ADDR_MC_GLOBAL
 
 #ifdef __cplusplus
 }
@@ -178,8 +193,6 @@ C_ASSERT(sizeof(IN6_PKTINFO)==20);
 
 #define EAI_NODATA 11004 /* WSANO_DATA */
 
-#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
-
 typedef struct addrinfo {
   int ai_flags;
   int ai_family;
@@ -206,14 +219,24 @@ typedef __MINGW_NAME_AW(ADDRINFO) ADDRINFOT,*PADDRINFOT;
 
 typedef ADDRINFOA ADDRINFO,*LPADDRINFO;
 
-#define AI_PASSIVE 0x1
-#define AI_CANONNAME 0x2
-#define AI_NUMERICHOST 0x4
+#define AI_PASSIVE                  0x00000001
+#define AI_CANONNAME                0x00000002
+#define AI_NUMERICHOST              0x00000004
 #if (_WIN32_WINNT >= 0x0600)
-#define AI_ADDRCONFIG             0x0400
-#define AI_NON_AUTHORITATIVE      0x04000
-#define AI_SECURE                 0x08000
-#define AI_RETURN_PREFERRED_NAMES 0x010000
+#define AI_NUMERICSERV              0x00000008
+#define AI_ALL                      0x00000100
+#define AI_ADDRCONFIG               0x00000400
+#define AI_V4MAPPED                 0x00000800
+#define AI_NON_AUTHORITATIVE        0x00004000
+#define AI_SECURE                   0x00008000
+#define AI_RETURN_PREFERRED_NAMES   0x00010000
+#endif
+#if (_WIN32_WINNT >= 0x0601)
+#define AI_FQDN                     0x00020000
+#define AI_FILESERVER               0x00040000
+#endif
+#if (_WIN32_WINNT >= 0x0602)
+#define AI_DISABLE_IDN_ENCODING     0x00080000
 #endif
 
 #ifdef __cplusplus
@@ -436,6 +459,10 @@ WINSOCK_API_LINKAGE INT WSAAPI InetPtonA(INT Family, LPCSTR pStringBuf, PVOID pA
 
 #ifdef __cplusplus
 }
+#endif
+
+#ifdef __LP64__
+#pragma pop_macro("u_long")
 #endif
 
 #endif /* _WS2TCPIP_H_ */

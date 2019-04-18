@@ -1,6 +1,10 @@
 /* Default linker script, for normal executables */
+/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
+   Copying and distribution of this script, with or without modification,
+   are permitted in any medium without royalty provided the copyright
+   notice and this notice are preserved.  */
 OUTPUT_FORMAT(pei-x86-64)
-SEARCH_DIR("/mingw64tdm/x86_64-w64-mingw32/lib"); SEARCH_DIR("/mingw64tdm/lib"); SEARCH_DIR("/usr/local/lib"); SEARCH_DIR("/lib"); SEARCH_DIR("/usr/lib");
+SEARCH_DIR("=/c/mingw810/prerequisites/x86_64-binutils-nomulti/x86_64-w64-mingw32/lib"); SEARCH_DIR("=/c/mingw810/prerequisites/x86_64-binutils-nomulti/lib"); SEARCH_DIR("=/usr/local/lib"); SEARCH_DIR("=/lib"); SEARCH_DIR("=/usr/lib");
 SECTIONS
 {
   /* Make the virtual address and file offset synced if the alignment is
@@ -9,7 +13,7 @@ SECTIONS
   . = ALIGN(__section_alignment__);
   .text  __image_base__ + ( __section_alignment__ < 0x1000 ? . : __section_alignment__ ) :
   {
-     *(.init)
+     KEEP(*(.init))
     *(.text)
     *(SORT(.text$*))
      *(.text.*)
@@ -17,15 +21,40 @@ SECTIONS
     *(.glue_7t)
     *(.glue_7)
     . = ALIGN(8);
-     ___CTOR_LIST__ = .; __CTOR_LIST__ = . ;
-			LONG (-1); LONG (-1);*(.ctors); *(.ctor); *(SORT(.ctors.*));  LONG (0); LONG (0);
-     ___DTOR_LIST__ = .; __DTOR_LIST__ = . ;
-			LONG (-1); LONG (-1); *(.dtors); *(.dtor); *(SORT(.dtors.*));  LONG (0); LONG (0);
-     *(.fini)
+       /* Note: we always define __CTOR_LIST__ and ___CTOR_LIST__ here,
+          we do not PROVIDE them.  This is because the ctors.o startup
+	  code in libgcc defines them as common symbols, with the
+          expectation that they will be overridden by the definitions
+	  here.  If we PROVIDE the symbols then they will not be
+	  overridden and global constructors will not be run.
+
+	  This does mean that it is not possible for a user to define
+	  their own __CTOR_LIST__ and __DTOR_LIST__ symbols.  If that
+	  ability is needed a custom linker script will have to be
+	  used.  (The custom script can just be a copy of this script
+	  with the PROVIDE() qualifiers added).
+	  See PR 22762 for more details.  */
+       ___CTOR_LIST__ = .;
+       __CTOR_LIST__ = .;
+       LONG (-1); LONG (-1);
+       KEEP (*(.ctors));
+       KEEP (*(.ctor));
+       KEEP (*(SORT_BY_NAME(.ctors.*)));
+       LONG (0); LONG (0);
+       /* See comment about __CTOR_LIST__ above.  The same reasoning
+    	  applies here too.  */
+       ___DTOR_LIST__ = .;
+       __DTOR_LIST__ = .;
+       LONG (-1); LONG (-1);
+       KEEP (*(.dtors));
+       KEEP (*(.dtor));
+       KEEP (*(SORT_BY_NAME(.dtors.*)));
+       LONG (0); LONG (0);
+     KEEP (*(.fini))
     /* ??? Why is .gcc_exc here?  */
      *(.gcc_exc)
     PROVIDE (etext = .);
-     *(.gcc_except_table)
+     KEEP (*(.gcc_except_table))
   }
   /* The Cygwin32 library uses a section to avoid copying certain data
      on fork.  This used to be named ".data".  The linker used
@@ -38,16 +67,16 @@ SECTIONS
     *(.data)
     *(.data2)
     *(SORT(.data$*))
-    *(.jcr)
+    KEEP(*(.jcr))
     __data_end__ = . ;
     *(.data_cygwin_nocopy)
   }
   .rdata BLOCK(__section_alignment__) :
   {
     *(.rdata)
-             *(SORT(.rdata$*))
+	     *(SORT(.rdata$*))
     __rt_psrelocs_start = .;
-    *(.rdata_runtime_pseudo_reloc)
+    KEEP(*(.rdata_runtime_pseudo_reloc))
     __rt_psrelocs_end = .;
   }
   __rt_psrelocs_size = __rt_psrelocs_end - __rt_psrelocs_start;
@@ -57,15 +86,15 @@ SECTIONS
   __RUNTIME_PSEUDO_RELOC_LIST__ = . - __rt_psrelocs_size;
   .eh_frame BLOCK(__section_alignment__) :
   {
-    *(.eh_frame*)
+    KEEP (*(.eh_frame*))
   }
   .pdata BLOCK(__section_alignment__) :
   {
-    *(.pdata*)
+    KEEP(*(.pdata*))
   }
   .xdata BLOCK(__section_alignment__) :
   {
-    *(.xdata*)
+    KEEP(*(.xdata*))
   }
   .bss BLOCK(__section_alignment__) :
   {
@@ -91,33 +120,33 @@ SECTIONS
   {
     /* This cannot currently be handled with grouped sections.
 	See pep.em:sort_sections.  */
-    SORT(*)(.idata$2)
-    SORT(*)(.idata$3)
+    KEEP (SORT(*)(.idata$2))
+    KEEP (SORT(*)(.idata$3))
     /* These zeroes mark the end of the import list.  */
     LONG (0); LONG (0); LONG (0); LONG (0); LONG (0);
-    SORT(*)(.idata$4)
+    KEEP (SORT(*)(.idata$4))
     __IAT_start__ = .;
     SORT(*)(.idata$5)
     __IAT_end__ = .;
-    SORT(*)(.idata$6)
-    SORT(*)(.idata$7)
+    KEEP (SORT(*)(.idata$6))
+    KEEP (SORT(*)(.idata$7))
   }
   .CRT BLOCK(__section_alignment__) :
   {
     ___crt_xc_start__ = . ;
-    *(SORT(.CRT$XC*))  /* C initialization */
+    KEEP (*(SORT(.CRT$XC*)))  /* C initialization */
     ___crt_xc_end__ = . ;
     ___crt_xi_start__ = . ;
-    *(SORT(.CRT$XI*))  /* C++ initialization */
+    KEEP (*(SORT(.CRT$XI*)))  /* C++ initialization */
     ___crt_xi_end__ = . ;
     ___crt_xl_start__ = . ;
-    *(SORT(.CRT$XL*))  /* TLS callbacks */
+    KEEP (*(SORT(.CRT$XL*)))  /* TLS callbacks */
     /* ___crt_xl_end__ is defined in the TLS Directory support code */
     ___crt_xp_start__ = . ;
-    *(SORT(.CRT$XP*))  /* Pre-termination */
+    KEEP (*(SORT(.CRT$XP*)))  /* Pre-termination */
     ___crt_xp_end__ = . ;
     ___crt_xt_start__ = . ;
-    *(SORT(.CRT$XT*))  /* Termination */
+    KEEP (*(SORT(.CRT$XT*)))  /* Termination */
     ___crt_xt_end__ = . ;
   }
   /* Windows TLS expects .tls$AAA to be at the start and .tls$ZZZ to be
@@ -127,11 +156,11 @@ SECTIONS
   .tls BLOCK(__section_alignment__) :
   {
     ___tls_start__ = . ;
-    *(.tls$AAA)
-    *(.tls)
-    *(.tls$)
-    *(SORT(.tls$*))
-    *(.tls$ZZZ)
+    KEEP (*(.tls$AAA))
+    KEEP (*(.tls))
+    KEEP (*(.tls$))
+    KEEP (*(SORT(.tls$*)))
+    KEEP (*(.tls$ZZZ))
     ___tls_end__ = . ;
   }
   .endjunk BLOCK(__section_alignment__) :
@@ -143,8 +172,8 @@ SECTIONS
   }
   .rsrc BLOCK(__section_alignment__) : SUBALIGN(4)
   {
-    *(.rsrc)
-    *(.rsrc$*)
+    KEEP (*(.rsrc))
+    KEEP (*(.rsrc$*))
   }
   .reloc BLOCK(__section_alignment__) :
   {
@@ -302,5 +331,14 @@ SECTIONS
   .zdebug_types BLOCK(__section_alignment__) (NOLOAD) :
   {
     *(.zdebug_types .zdebug.gnu.linkonce.wt.*)
+  }
+  /* For Go and Rust.  */
+  .debug_gdb_scripts BLOCK(__section_alignment__) (NOLOAD) :
+  {
+    *(.debug_gdb_scripts)
+  }
+  .zdebug_gdb_scripts BLOCK(__section_alignment__) (NOLOAD) :
+  {
+    *(.zdebug_gdb_scripts)
   }
 }

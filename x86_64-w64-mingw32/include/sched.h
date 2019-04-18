@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2011-2013 mingw-w64 project
+   Copyright (c) 2011-2016  mingw-w64 project
 
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -49,7 +49,7 @@ struct sched_param {
 extern "C" {
 #endif
 
-#if defined DLL_EXPORT && !defined (WINPTHREAD_EXPORT_ALL_DEBUG) && !defined WINPTHREAD_STATIC
+#if defined DLL_EXPORT && !defined (WINPTHREAD_EXPORT_ALL_DEBUG)
 #ifdef IN_WINPTHREAD
 #define WINPTHREAD_SCHED_API __declspec(dllexport)
 #else

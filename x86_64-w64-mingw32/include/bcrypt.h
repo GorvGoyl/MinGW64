@@ -12,10 +12,14 @@
 extern "C" {
 #endif
 
-#if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_DESKTOP)
+#if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_DESKTOP) || _WIN32_WINNT >= 0x0A00
 
 #ifndef WINAPI
+#if defined(_ARM_)
+#define WINAPI
+#else
 #define WINAPI __stdcall
+#endif
 #endif
 
 #if !defined (_NTDEF_) && !defined (_NTSTATUS_PSDK)
@@ -30,17 +34,16 @@ extern "C" {
 #ifndef CONST
 #define CONST const
 #endif
-
+#ifndef _NO_W32_PSEUDO_MODIFIERS
 #ifndef IN
 #define IN
 #endif
-
 #ifndef OUT
 #define OUT
 #endif
-
 #ifndef OPTIONAL
 #define OPTIONAL
+#endif
 #endif
 
 #define BCRYPT_OBJECT_ALIGNMENT 16
@@ -186,7 +189,7 @@ extern "C" {
   } BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO,*PBCRYPT_AUTHENTICATED_CIPHER_MODE_INFO;
 #endif
 
-#if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_APP)
+#if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_APP) || _WIN32_WINNT >= 0x0A00
   typedef struct _BCryptBuffer {
     ULONG cbBuffer;
     ULONG BufferType;
@@ -200,7 +203,7 @@ extern "C" {
   } BCryptBufferDesc,*PBCryptBufferDesc;
 #endif
 
-#if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_DESKTOP)
+#if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_DESKTOP) || _WIN32_WINNT >= 0x0A00
 
 #define BCRYPT_PUBLIC_KEY_BLOB L"PUBLICBLOB"
 #define BCRYPT_PRIVATE_KEY_BLOB L"PRIVATEBLOB"
@@ -581,6 +584,8 @@ typedef PVOID BCRYPT_HANDLE;
   NTSTATUS WINAPI BCryptDeriveKeyPBKDF2 (BCRYPT_ALG_HANDLE hPrf, PUCHAR pbPassword, ULONG cbPassword, PUCHAR pbSalt, ULONG cbSalt, ULONGLONG cIterations, PUCHAR pbDerivedKey, ULONG cbDerivedKey, ULONG dwFlags);
   NTSTATUS WINAPI BCryptResolveProviders (LPCWSTR pszContext, ULONG dwInterface, LPCWSTR pszFunction, LPCWSTR pszProvider, ULONG dwMode, ULONG dwFlags, ULONG *pcbBuffer, PCRYPT_PROVIDER_REFS *ppBuffer);
   NTSTATUS WINAPI BCryptGetFipsAlgorithmMode (BOOLEAN *pfEnabled);
+#endif
+#if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_DESKTOP)
 #ifndef KERNEL_MODE_CNG
   NTSTATUS WINAPI BCryptQueryProviderRegistration (LPCWSTR pszProvider, ULONG dwMode, ULONG dwInterface, ULONG *pcbBuffer, PCRYPT_PROVIDER_REG *ppBuffer);
   NTSTATUS WINAPI BCryptEnumRegisteredProviders (ULONG *pcbBuffer, PCRYPT_PROVIDERS *ppBuffer);

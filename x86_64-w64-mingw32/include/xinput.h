@@ -156,6 +156,8 @@
 #define XUSER_MAX_COUNT                 4
 #define XUSER_INDEX_ANY                 0x000000FF
 
+#define XINPUT_CAPS_FFB_SUPPORTED       0x0001
+
 /*
  * Defines the structure of an xbox 360 joystick.
  */
@@ -231,6 +233,8 @@ DWORD WINAPI XInputGetKeystroke(DWORD, DWORD, PXINPUT_KEYSTROKE);
 DWORD WINAPI XInputGetCapabilities(DWORD, DWORD, XINPUT_CAPABILITIES*);
 DWORD WINAPI XInputGetDSoundAudioDeviceGuids(DWORD, GUID*, GUID*);
 DWORD WINAPI XInputGetBatteryInformation(DWORD, BYTE, XINPUT_BATTERY_INFORMATION*);
+
+DWORD WINAPI XInputGetStateEx(DWORD, XINPUT_STATE*);
 
 #ifdef __cplusplus
 }

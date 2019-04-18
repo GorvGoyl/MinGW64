@@ -40,6 +40,10 @@
 #include <utilapiset.h>
 #include <wow64apiset.h>
 
+#ifdef __WIDL__
+#define NOWINBASEINTERLOCK 1
+#endif
+
 #ifndef NOWINBASEINTERLOCK
 #define __INTRINSIC_GROUP_WINBASE /* only define the intrinsics in this file */
 #include <psdk_inc/intrin-impl.h>
@@ -928,7 +932,7 @@ extern "C" {
   SHORT __cdecl InterlockedOr16(SHORT volatile *Destination, SHORT Value);
   SHORT __cdecl InterlockedXor16(SHORT volatile *Destination, SHORT Value);
 
-#elif defined (__arm__) && !defined (RC_INVOKED)
+#elif (defined (__arm__) || defined (__aarch64__)) && !defined (RC_INVOKED)
 #define InterlockedAnd _InterlockedAnd
 #define InterlockedOr _InterlockedOr
 #define InterlockedXor _InterlockedXor
@@ -1061,6 +1065,10 @@ extern "C" {
 #define INVALID_ATOM ((ATOM)0)
 #endif
 
+#if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_DESKTOP) || defined(WINSTORECOMPAT)
+  WINBASEAPI HLOCAL WINAPI LocalAlloc (UINT uFlags, SIZE_T uBytes);
+  WINBASEAPI HLOCAL WINAPI LocalFree (HLOCAL hMem);
+#endif
 #if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_DESKTOP)
   int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd);
   int WINAPI wWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nShowCmd);
@@ -1078,14 +1086,12 @@ extern "C" {
   WINBASEAPI LPVOID WINAPI GlobalWire (HGLOBAL hMem);
   WINBASEAPI WINBOOL WINAPI GlobalUnWire (HGLOBAL hMem);
   WINBASEAPI VOID WINAPI GlobalMemoryStatus (LPMEMORYSTATUS lpBuffer);
-  WINBASEAPI HLOCAL WINAPI LocalAlloc (UINT uFlags, SIZE_T uBytes);
   WINBASEAPI HLOCAL WINAPI LocalReAlloc (HLOCAL hMem, SIZE_T uBytes, UINT uFlags);
   WINBASEAPI LPVOID WINAPI LocalLock (HLOCAL hMem);
   WINBASEAPI HLOCAL WINAPI LocalHandle (LPCVOID pMem);
   WINBASEAPI WINBOOL WINAPI LocalUnlock (HLOCAL hMem);
   WINBASEAPI SIZE_T WINAPI LocalSize (HLOCAL hMem);
   WINBASEAPI UINT WINAPI LocalFlags (HLOCAL hMem);
-  WINBASEAPI HLOCAL WINAPI LocalFree (HLOCAL hMem);
   WINBASEAPI SIZE_T WINAPI LocalShrink (HLOCAL hMem, UINT cbNewSize);
   WINBASEAPI SIZE_T WINAPI LocalCompact (UINT uMinFree);
 #if _WIN32_WINNT >= 0x0600
@@ -1139,6 +1145,7 @@ extern "C" {
 
 #if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_APP)
   WINBASEAPI VOID WINAPI RaiseFailFastException (PEXCEPTION_RECORD pExceptionRecord, PCONTEXT pContextRecord, DWORD dwFlags);
+  WINBASEAPI DWORD WINAPI SetThreadIdealProcessor (HANDLE hThread, DWORD dwIdealProcessor);
 #endif
 
 #if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_DESKTOP)
@@ -1153,7 +1160,6 @@ extern "C" {
   WINBASEAPI WINBOOL WINAPI ConvertFiberToThread (VOID);
   WINBASEAPI VOID WINAPI SwitchToFiber (LPVOID lpFiber);
   WINBASEAPI DWORD_PTR WINAPI SetThreadAffinityMask (HANDLE hThread, DWORD_PTR dwThreadAffinityMask);
-  WINBASEAPI DWORD WINAPI SetThreadIdealProcessor (HANDLE hThread, DWORD dwIdealProcessor);
 
   /* TODO: Add RTL_UMS... to winnt.h header and add UMS-base API.  */
 
@@ -1490,6 +1496,8 @@ extern "C" {
 #if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_DESKTOP) || defined(WINSTORECOMPAT)
 #define CreateSemaphore __MINGW_NAME_AW(CreateSemaphore)
   WINBASEAPI HANDLE WINAPI CreateSemaphoreW (LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName);
+#define LoadLibrary __MINGW_NAME_AW(LoadLibrary)
+  WINBASEAPI HMODULE WINAPI LoadLibraryW (LPCWSTR lpLibFileName);
 #endif
 #if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_DESKTOP)
   WINBASEAPI HANDLE WINAPI OpenMutexA (DWORD dwDesiredAccess, WINBOOL bInheritHandle, LPCSTR lpName);
@@ -1507,7 +1515,6 @@ extern "C" {
   WINBASEAPI HANDLE WINAPI OpenFileMappingA (DWORD dwDesiredAccess, WINBOOL bInheritHandle, LPCSTR lpName);
   WINBASEAPI DWORD WINAPI GetLogicalDriveStringsA (DWORD nBufferLength, LPSTR lpBuffer);
   WINBASEAPI HMODULE WINAPI LoadLibraryA (LPCSTR lpLibFileName);
-  WINBASEAPI HMODULE WINAPI LoadLibraryW (LPCWSTR lpLibFileName);
 
 #ifndef UNICODE
 #define OpenMutex OpenMutexA
@@ -2865,6 +2872,7 @@ extern "C" {
 #if _WIN32_WINNT >= 0x0600
 
 #define SYMBOLIC_LINK_FLAG_DIRECTORY (0x1)
+#define SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE (0x2)
 
 #define VALID_SYMBOLIC_LINK_FLAGS SYMBOLIC_LINK_FLAG_DIRECTORY
 

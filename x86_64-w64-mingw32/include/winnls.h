@@ -901,8 +901,12 @@ extern "C" {
   WINBASEAPI WINBOOL WINAPI IsValidCodePage (UINT CodePage);
 #endif
 
-#if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_DESKTOP)
+#if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_DESKTOP) || defined(WINSTORECOMPAT)
   WINBASEAPI UINT WINAPI GetACP (void);
+  WINBASEAPI WINBOOL WINAPI IsDBCSLeadByteEx (UINT CodePage, BYTE TestChar);
+#endif
+
+#if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_DESKTOP)
   WINBASEAPI UINT WINAPI GetOEMCP (void);
   WINBASEAPI int WINAPI CompareStringA (LCID Locale, DWORD dwCmpFlags, PCNZCH lpString1, int cchCount1, PCNZCH lpString2, int cchCount2);
   WINBASEAPI int WINAPI LCMapStringW (LCID Locale, DWORD dwMapFlags, LPCWSTR lpSrcStr, int cchSrc, LPWSTR lpDestStr, int cchDest);
@@ -910,7 +914,6 @@ extern "C" {
   WINBASEAPI int WINAPI GetLocaleInfoW (LCID Locale, LCTYPE LCType, LPWSTR lpLCData, int cchData);
   WINBASEAPI int WINAPI GetLocaleInfoA (LCID Locale, LCTYPE LCType, LPSTR lpLCData, int cchData);
   WINBASEAPI WINBOOL WINAPI IsDBCSLeadByte (BYTE TestChar);
-  WINBASEAPI WINBOOL WINAPI IsDBCSLeadByteEx (UINT CodePage, BYTE TestChar);
   WINBASEAPI int WINAPI GetNumberFormatA (LCID Locale, DWORD dwFlags, LPCSTR lpValue, CONST NUMBERFMTA *lpFormat, LPSTR lpNumberStr, int cchNumber);
   WINBASEAPI int WINAPI GetNumberFormatW (LCID Locale, DWORD dwFlags, LPCWSTR lpValue, CONST NUMBERFMTW *lpFormat, LPWSTR lpNumberStr, int cchNumber);
   WINBASEAPI int WINAPI GetCurrencyFormatA (LCID Locale, DWORD dwFlags, LPCSTR lpValue, CONST CURRENCYFMTA *lpFormat, LPSTR lpCurrencyStr, int cchCurrency);

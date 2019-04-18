@@ -6,8 +6,14 @@
 #ifndef __ROUTING_MPRADMIN_H__
 #define __ROUTING_MPRADMIN_H__
 
+#include <winapifamily.h>
+
+#if WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_DESKTOP)
+
 #include <lmcons.h>
 #include <ras.h>
+#include <in6addr.h>
+#include <wincrypt.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -990,5 +996,7 @@ DWORD APIENTRY MprAdminServerSetInfoEx(
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* WINAPI_FAMILY_PARTITION (WINAPI_PARTITION_DESKTOP) */
 
 #endif /* __ROUTING_MPRADMIN_H__ */
