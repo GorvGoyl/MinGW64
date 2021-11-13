@@ -1,7 +1,9 @@
 # MinGW64
 MinGW64 compiler for running and debugging C/C++ code in Visual Studio Code in Windows  
 
-- Tutorial: https://medium.com/@jerrygoyal/run-debug-intellisense-c-c-in-vscode-within-5-minutes-3ed956e059d6  
+- Tutorial:https://gourav.io/blog/setup-vscode-to-run-debug-c-cpp-code
 
-- Pick the latest release for MinGW64 C/C++ compiler: https://github.com/JerryGoyal/MinGW64/releases
+
+
+- Pick the latest release for MinGW64 C/C++ compiler: https://github.com/GorvGoyl/MinGW64/releases
 
